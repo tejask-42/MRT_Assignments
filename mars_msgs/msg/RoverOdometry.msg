@@ -1,4 +1,0 @@
-int32 rover_id
-float32 orientation
-geometry_msgs/Twist linear_velocity
-float32 angular_velocity
