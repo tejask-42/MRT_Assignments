@@ -1,0 +1,29 @@
+<?xml version='1.0'?>
+<ignition version='1.0'>
+  <!-- Launch Gazebo with the rover model -->
+  <executable name='sensor-world'>
+    <command>ign gazebo rover.sdf</command>
+  </executable>
+
+  <!-- Launch the LiDAR node -->
+  <executable name='lidar_node'>
+    <command>./build/lidar_node</command>
+  </executable>
+
+  <!-- ROS 2 to Ignition Bridge for keypress > DANGER DO NOT UNCOMMENT, DOES NOT WORK ALONGSIDE KEYBOARD INPUT
+  <executable name='ros_gz_bridge_key'>
+    <command>ros2 run ros_gz_bridge parameter_bridge /keyboard/keypress@std_msgs/msg/Int32@ignition.msgs.Int32</command>
+    <output>screen</output>
+  </executable-->
+
+  <!-- ROS 2 to Ignition Bridge for velocity command -->
+  <executable name='ros_gz_bridge_cmd'>
+    <command>ros2 run ros_gz_bridge parameter_bridge /debug_cmd_vel@std_msgs/msg/Int32@ignition.msgs.Int32</command>
+    <output>screen</output>
+  </executable>
+
+  <!-- Uncomment to continuously publish velocity commands through ROS-->
+  <executable name='twist_publisher'>
+    <command>./build/twist_publisher</command>
+  </executable>
+</ignition>

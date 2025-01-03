@@ -1,0 +1,772 @@
+<?xml version="1.0" ?>
+<sdf version="1.9">
+    <world name="rover_world">
+        <physics name="1ms" type="ignored">
+            <max_step_size>0.001</max_step_size> <!-- refresh every millisecond -->
+            <real_time_factor>1.0</real_time_factor>
+        </physics>
+        <plugin
+            filename="gz-sim-physics-system"
+            name="gz::sim::systems::Physics">
+        </plugin>
+        <plugin
+            filename="gz-sim-user-commands-system"
+            name="gz::sim::systems::UserCommands">
+        </plugin>
+        <plugin
+            filename="gz-sim-scene-broadcaster-system"
+            name="gz::sim::systems::SceneBroadcaster">
+        </plugin>
+        <plugin
+            filename="libignition-gazebo-sensors-system.so"
+            name="ignition::gazebo::systems::Sensors">
+            <render_engine>ogre2</render_engine>
+        </plugin>
+
+        <gui fullscreen="0">
+            <!-- 3D scene -->
+            <plugin filename="GzScene3D" name="3D View">
+                <ignition-gui>
+                    <title>3D View</title>
+                    <property type="bool" key="showTitleBar">false</property>
+                    <property type="string" key="state">docked</property>
+                </ignition-gui>
+
+                <engine>ogre2</engine>
+                <scene>scene</scene>
+                <ambient_light>0.4 0.4 0.4</ambient_light>
+                <background_color>0.8 0.8 0.8</background_color>
+            </plugin>
+
+            <!-- world control -->
+            <plugin filename="WorldControl" name="World control">
+                <ignition-gui>
+                    <title>World control</title>
+                    <property type="bool" key="showTitleBar">false</property>
+                    <property type="bool" key="resizable">false</property>
+                    <property type="double" key="height">72</property>
+                    <property type="double" key="width">121</property>
+                    <property type="double" key="z">1</property>
+
+                    <property type="string" key="state">floating</property>
+                    <anchors target="3D View">
+                        <line own="left" target="left"/>
+                        <line own="bottom" target="bottom"/>
+                    </anchors>
+                </ignition-gui>
+
+                <play_pause>true</play_pause>
+                <step>true</step>
+                <start_paused>true</start_paused>
+                <service>/world/world_demo/control</service>
+                <stats_topic>/world/world_demo/stats</stats_topic>
+            </plugin>
+
+            <!-- World statistics -->
+            <plugin filename="WorldStats" name="World stats">
+                <ignition-gui>
+                    <title>World stats</title>
+                    <property type="bool" key="showTitleBar">false</property>
+                    <property type="bool" key="resizable">false</property>
+                    <property type="double" key="height">110</property>
+                    <property type="double" key="width">290</property>
+                    <property type="double" key="z">1</property>
+                    <property type="string" key="state">floating</property>
+                    <anchors target="3D View">
+                        <line own="right" target="right"/>
+                        <line own="bottom" target="bottom"/>
+                    </anchors>
+                </ignition-gui>
+                <sim_time>true</sim_time>
+                <real_time>true</real_time>
+                <real_time_factor>true</real_time_factor>
+                <iterations>true</iterations>
+                <topic>/world/world_demo/stats</topic>
+            </plugin>
+
+            <!-- Enttity tree -->
+            <plugin filename="EntityTree" name="Entity tree">
+            </plugin>
+            <plugin filename="KeyPublisher" name="Key Publisher"/>
+        </gui>
+        <!-- light -->
+        <light type="directional" name="sun">
+            <cast_shadows>true</cast_shadows>
+            <pose>0 0 10 0 0 0</pose>
+            <diffuse>0.8 0.8 0.8 1</diffuse>
+            <specular>0.2 0.2 0.2 1</specular>
+            <attenuation>
+                <range>1000</range>
+                <constant>0.9</constant>
+                <linear>0.01</linear>
+                <quadratic>0.001</quadratic>
+            </attenuation>
+            <direction>-0.5 0.1 -0.9</direction>
+        </light>
+
+        <model name="ground_plane">
+            <static>true</static>
+            <link name="link">
+                <collision name="collision">
+                    <geometry>
+                        <plane>
+                        <normal>0 0 1</normal>
+                        </plane>
+                    </geometry>
+                    <surface>
+                        <bounce>
+                            <restitution_coefficient>0.7</restitution_coefficient>
+                            <threshold>0.1</threshold>
+                        </bounce>
+                    </surface>
+                </collision>
+                <visual name="visual">
+                <geometry>
+                    <plane>
+                    <normal>0 0 1</normal>
+                    <size>1000 1000</size>
+                    </plane>
+                </geometry>
+                <surface>
+                        <friction> <!-- Adding friction to the ground -->
+                        <ode>
+                            <mu>1.0</mu>
+                            <mu2>0.5</mu2>
+                        </ode>
+                        <torsional>
+                            <coefficient>1.0</coefficient>
+                            <use_patch_radius>true</use_patch_radius>
+                            <patch_radius>0.1</patch_radius>
+                            <surface_radius>0.1</surface_radius>
+                        </torsional>
+                        </friction>
+                </surface>
+                <material>
+                    <ambient>0.2 0.1 0.05 1.0</ambient> <!-- making the ground a little red to look like Mars-->
+                    <diffuse>0.6 0.2 0.1 1.0</diffuse>
+                    <specular>0.05 0.02 0.01 1.0</specular>
+                </material>
+                </visual>
+            </link>
+        </model>
+        <model name='wall'>
+            <static>true</static>
+            <pose>10 5 5 0 0 0</pose><!-- 10m ahead of rover-->
+            <link name='box'>
+                <pose/>
+                <visual name='visual'>
+                    <geometry>
+                        <box>
+                            <size>0.5 10.0 10.0</size>
+                        </box>
+                    </geometry>
+                    <!--translucent gray wall-->
+                    <material>
+                        <ambient>0.2 0.2 0.2 0.8</ambient>
+                        <diffuse>0.2 0.2 0.2 0.8</diffuse>
+                        <specular>0.2 0.2 0.2 0.8</specular>
+                    </material>
+                </visual>
+                <collision name='collision'>
+                    <geometry>
+                        <box>
+                            <size>0.5 10.0 10.0</size>
+                        </box>
+                    </geometry>
+                    
+                </collision>
+            </link>
+        </model>
+        <model name="rover" canonical_link="chassis">
+            <pose relative_to="world">0 0 0 0 0 0</pose>
+            <link name="chassis">
+                <pose relative_to="__model__">0.5 0 5 0 0 0</pose> <!--releasing the rover a little above ground to simulate landing-->
+                <inertial>
+                    <mass>4.91</mass> <!--Assuming aluminium body of 3 x 3 x 1.5-->
+                    <inertia>
+                        <ixx>0.972</ixx>
+                        <ixy>0</ixy>
+                        <ixz>0</ixz>
+                        <iyy>0.972</iyy>
+                        <iyz>0</iyz>
+                        <izz>1.747</izz>
+                    </inertia>
+                </inertial>
+                    <visual name='visual'>
+                        <geometry>
+                            <box>
+                                <size>3 3 1.5</size>
+                            </box>
+                        </geometry>
+                        <!--let's add color to our link-->
+                        <material>
+                            <ambient>0.3 0.3 0.3 1</ambient> <!-- grey color -->
+                            <diffuse>0.8 0.8 0.8 1</diffuse>
+                            <specular>0.5 0.5 0.5 1</specular>
+                        </material>
+                    </visual>
+                    <collision name='collision'>
+                        <geometry>
+                            <box>
+                                <size>3 3 1.5</size>
+                            </box>
+                        </geometry>
+                    </collision>
+                    <!-- LiDAR Sensor -->
+                    <sensor name='gpu_lidar' type='gpu_lidar'>"
+                        <pose relative_to='chassis'>1.6 0 0.5 0 0 0</pose>
+                        <topic>lidar</topic>
+                        <update_rate>10</update_rate>
+                        <ray>
+                            <scan>
+                                <horizontal>
+                                    <samples>640</samples>
+                                    <resolution>1</resolution>
+                                    <min_angle>-1.396263</min_angle>
+                                    <max_angle>1.396263</max_angle>
+                                </horizontal>
+                                <vertical>
+                                    <samples>1</samples>
+                                    <resolution>0.01</resolution>
+                                    <min_angle>0</min_angle>
+                                    <max_angle>0</max_angle>
+                                </vertical>
+                            </scan>
+                            <range>
+                                <min>0.08</min>
+                                <max>10.0</max>
+                                <resolution>0.01</resolution>
+                            </range>
+                        </ray>
+                        <always_on>1</always_on>
+                        <visualize>true</visualize>
+                    </sensor>
+                </link>
+                <!-- sensor on the chassis -->
+                <link name="sensor">
+                    <pose relative_to="chassis">1.6 0 0.5 0 1.5707 0</pose>
+                    <visual name="visual">
+                        <geometry>
+                            <cylinder>
+                                <radius>0.1</radius>
+                                <length>0.2</length>
+                            </cylinder>
+                        </geometry>
+                        <material>
+                            <ambient>0.1 0.1 0.1 1</ambient>
+                            <diffuse>0.1 0.1 0.1 1</diffuse>
+                            <specular>0.5 0.5 0.5 1</specular>
+                        </material>
+                    </visual>
+                </link>
+                <!-- Left back wheel -->
+                <link name='left_back_wheel'>
+                    <pose relative_to="chassis">-1.5 1.5 -0.75 -1.5707 0 0</pose>
+                    <inertial>
+                        <mass>0.6</mass>
+                        <inertia>
+                            <ixx>0.03</ixx>
+                            <ixy>0</ixy>
+                            <ixz>0</ixz>
+                            <iyy>0.03</iyy>
+                            <iyz>0</iyz>
+                            <izz>0.06</izz>
+                        </inertia>
+                    </inertial>
+                    <visual name='visual'>
+                        <geometry>
+                            <cylinder>
+                                <radius>0.5</radius>
+                                <length>0.4</length>
+                            </cylinder>
+                        </geometry>
+                        <material>
+                            <ambient>0.1 0.1 0.1 1</ambient>
+                            <diffuse>0.1 0.1 0.1 1</diffuse>
+                            <specular>0.5 0.5 0.5 1</specular>
+                        </material>
+                    </visual>
+                    <collision name='collision'>
+                        <geometry>
+                            <cylinder>
+                                <radius>0.5</radius>
+                                <length>0.4</length>
+                            </cylinder>
+                        </geometry>
+                        <surface>
+                            <bounce>
+                                <restitution_coefficient>0.4</restitution_coefficient> <!-- give it a little bounce -->
+                                <threshold>0.1</threshold>
+                            </bounce>
+                        </surface>
+                    </collision>
+                </link>
+                <!--Right back wheel-->
+                <link name='right_back_wheel'>
+                    <pose relative_to="chassis">-1.5 -1.5 -0.75 -1.5707 0 0</pose> <!--angles are in radian-->
+                    <inertial>
+                        <mass>0.6</mass>
+                        <inertia>
+                            <ixx>0.03</ixx>
+                            <ixy>0</ixy>
+                            <ixz>0</ixz>
+                            <iyy>0.03</iyy>
+                            <iyz>0</iyz>
+                            <izz>0.06</izz>
+                        </inertia>
+                    </inertial>
+                    <visual name='visual'>
+                        <geometry>
+                            <cylinder>
+                                <radius>0.5</radius>
+                                <length>0.4</length>
+                            </cylinder>
+                        </geometry>
+                        <material>
+                            <ambient>0.1 0.1 0.1 1</ambient>
+                            <diffuse>0.1 0.1 0.1 1</diffuse>
+                            <specular>0.5 0.5 0.5 1</specular>
+                        </material>
+                    </visual>
+                    <collision name='collision'>
+                        <geometry>
+                            <cylinder>
+                                <radius>0.5</radius>
+                                <length>0.4</length>
+                            </cylinder>
+                        </geometry>
+                        <surface>
+                            <bounce>
+                                <restitution_coefficient>0.4</restitution_coefficient> <!-- give it a little bounce -->
+                                <threshold>0.1</threshold>
+                            </bounce>
+                        </surface>
+                    </collision>
+                </link>
+                <!-- Left front wheel -->
+                <link name='left_front_wheel'>
+                    <pose relative_to="chassis">1.5 1.5 -0.75 -1.5707 0 0</pose>
+                    <inertial>
+                        <mass>0.364</mass>
+                        <inertia>
+                            <ixx>0.02</ixx>
+                            <ixy>0</ixy>
+                            <ixz>0</ixz>
+                            <iyy>0.02</iyy>
+                            <iyz>0</iyz>
+                            <izz>0.02</izz>
+                        </inertia>
+                    </inertial>
+                    <visual name='visual'>
+                        <geometry>
+                            <sphere>
+                                <radius>0.5</radius>
+                            </sphere>
+                        </geometry>
+                        <material>
+                            <ambient>0.1 0.1 0.1 1</ambient>
+                            <diffuse>0.1 0.1 0.1 1</diffuse>
+                            <specular>0.5 0.5 0.5 1</specular>
+                        </material>
+                    </visual>
+                    <collision name='collision'>
+                        <geometry>
+                            <sphere>
+                                <radius>0.5</radius>
+                            </sphere>
+                        </geometry>
+                        <surface>
+                            <bounce>
+                                <restitution_coefficient>0.7</restitution_coefficient> <!-- give it a little bounce -->
+                                <threshold>0.1</threshold>
+                            </bounce>
+                        </surface>
+                    </collision>
+                </link>
+                <!-- Right front wheel -->
+                <link name='right_front_wheel'>
+                    <pose relative_to="chassis">1.5 -1.5 -0.75 -1.5707 0 0</pose>
+                    <inertial>
+                        <mass>0.364</mass>
+                        <inertia>
+                            <ixx>0.02</ixx>
+                            <ixy>0</ixy>
+                            <ixz>0</ixz>
+                            <iyy>0.02</iyy>
+                            <iyz>0</iyz>
+                            <izz>0.02</izz>
+                        </inertia>
+                    </inertial>
+                    <visual name='visual'>
+                        <geometry>
+                            <sphere>
+                                <radius>0.5</radius>
+                            </sphere>
+                        </geometry>
+                        <material>
+                            <ambient>0.1 0.1 0.1 1</ambient>
+                            <diffuse>0.1 0.1 0.1 1</diffuse>
+                            <specular>0.5 0.5 0.5 1</specular>
+                        </material>
+                    </visual>
+                    <collision name='collision'>
+                        <geometry>
+                            <sphere>
+                                <radius>0.5</radius>
+                            </sphere>
+                        </geometry>
+                        <surface>
+                            <bounce>
+                                <restitution_coefficient>0.7</restitution_coefficient> <!-- give it a little bounce -->
+                                <threshold>0.1</threshold>
+                            </bounce>
+                        </surface>
+                    </collision>
+                </link>
+                <!-- Primary arm -->
+                <link name='primary_arm'>
+                    <pose relative_to="chassis">1 0 1.75 0 0 0</pose>
+                    <inertial>
+                        <mass>0.3</mass>
+                        <inertia>
+                            <ixx>0.02</ixx>
+                            <ixy>0</ixy>
+                            <ixz>0</ixz>
+                            <iyy>0.02</iyy>
+                            <iyz>0</iyz>
+                            <izz>0.04</izz>
+                        </inertia>
+                    </inertial>
+                    <visual name='visual'>
+                        <geometry>
+                            <cylinder>
+                                <radius>0.25</radius>
+                                <length>2.25</length>
+                            </cylinder>
+                        </geometry>
+                        <material>
+                            <ambient>0.4 0.4 0.4 1</ambient>
+                            <diffuse>0.4 0.4 0.4 1</diffuse>
+                            <specular>0.5 0.5 0.5 1</specular>
+                        </material>
+                    </visual>
+                    <collision name='collision'>
+                        <geometry>
+                            <cylinder>
+                                <radius>0.25</radius>
+                                <length>2.25</length>
+                            </cylinder>
+                        </geometry>
+                    </collision>
+                </link>
+                <!-- Secondary arm -->
+                <link name='secondary_arm'>
+                    <pose relative_to="chassis">1.9 0 2.7 0 1.5707 0</pose>
+                    <inertial>
+                        <mass>0.3</mass>
+                        <inertia>
+                            <ixx>0.02</ixx>
+                            <ixy>0</ixy>
+                            <ixz>0</ixz>
+                            <iyy>0.02</iyy>
+                            <iyz>0</iyz>
+                            <izz>0.04</izz>
+                        </inertia>
+                    </inertial>
+                    <visual name='visual'>
+                        <geometry>
+                            <cylinder>
+                                <radius>0.225</radius>
+                                <length>2.25</length>
+                            </cylinder>
+                        </geometry>
+                        <material>
+                            <ambient>0.4 0.4 0.4 1</ambient>
+                            <diffuse>0.4 0.4 0.4 1</diffuse>
+                            <specular>0.5 0.5 0.5 1</specular>
+                        </material>
+                    </visual>
+                    <collision name='collision'>
+                        <geometry>
+                            <cylinder>
+                                <radius>0.225</radius>
+                                <length>2.25</length>
+                            </cylinder>
+                        </geometry>
+                    </collision>
+                </link>
+                <!-- Tertiary arm -->
+                <link name='tertiary_arm'>
+                    <pose relative_to="secondary_arm">1 0 0.875 0 1.5707 0</pose>
+                    <inertial>
+                        <mass>0.2</mass>
+                        <inertia>
+                            <ixx>0.01</ixx>
+                            <ixy>0</ixy>
+                            <ixz>0</ixz>
+                            <iyy>0.01</iyy>
+                            <iyz>0</iyz>
+                            <izz>0.02</izz>
+                        </inertia>
+                    </inertial>
+                    <visual name='visual'>
+                        <geometry>
+                            <cylinder>
+                                <radius>0.2</radius>
+                                <length>1.75</length>
+                            </cylinder>
+                        </geometry>
+                        <material>
+                            <ambient>0.4 0.4 0.4 1</ambient>
+                            <diffuse>0.4 0.4 0.4 1</diffuse>
+                            <specular>0.5 0.5 0.5 1</specular>
+                        </material>
+                    </visual>
+                    <collision name='collision'>
+                        <geometry>
+                            <cylinder>
+                                <radius>0.2</radius>
+                                <length>1.75</length>
+                            </cylinder>
+                        </geometry>
+                    </collision>
+                </link>
+                <!-- Hand -->
+                <link name='hand'>
+                    <pose relative_to="tertiary_arm">0 0 0.875 0 1.5707 0</pose>
+                    <inertial>
+                        <mass>0.1</mass>
+                        <inertia>
+                            <ixx>0.005</ixx>
+                            <ixy>0</ixy>
+                            <ixz>0</ixz>
+                            <iyy>0.005</iyy>
+                            <iyz>0</iyz>
+                            <izz>0.01</izz>
+                        </inertia>
+                    </inertial>
+                    <visual name='visual'>
+                        <geometry>
+                            <cylinder>
+                                <radius>0.1</radius>
+                                <length>0.8</length>
+                            </cylinder>
+                        </geometry>
+                        <material>
+                            <ambient>0.1 0.1 0.1 1</ambient>
+                            <diffuse>0.1 0.1 0.1 1</diffuse>
+                            <specular>0.5 0.5 0.5 1</specular>
+                        </material>
+                    </visual>
+                    <collision name='collision'>
+                        <geometry>
+                            <cylinder>
+                                <radius>0.1</radius>
+                                <length>0.8</length>
+                            </cylinder>
+                        </geometry>
+                    </collision>
+                </link>
+                <!-- sensor joint -->
+                <joint name='sensor_joint' type="fixed">
+                    <pose relative_to="chassis">1.6 0 0.5 0 1.5707 0</pose>
+                    <parent>chassis</parent>
+                    <child>sensor</child>
+                </joint>
+                <!-- left back wheel joint-->
+                <joint name="left_wheel_joint" type="revolute">
+                    <pose relative_to="left_back_wheel"/>
+                    <parent>chassis</parent>
+                    <child>left_back_wheel</child>
+                    <axis>
+                        <xyz expressed_in='__model__'>0 1 0</xyz> <!--rotates in y axis-->
+                        <dynamics>
+                            <spring_stiffness>50</spring_stiffness> <!-- added stiffness and damping to make it realistic-->
+                            <spring_damping>10</spring_damping>
+                        </dynamics>
+                        <limit>
+                            <lower>-1.79769e+308</lower>    <!--negative infinity-->
+                            <upper>1.79769e+308</upper>     <!--positive infinity-->
+                            
+                        </limit>
+                    </axis>
+                </joint>
+                <!-- right back wheel joint-->
+                <joint name='right_wheel_joint' type='revolute'>
+                    <pose relative_to='right_back_wheel'/>
+                    <parent>chassis</parent>
+                    <child>right_back_wheel</child>
+                    <axis>
+                        <xyz expressed_in='__model__'>0 1 0</xyz>
+                        <dynamics>
+                            <spring_stiffness>50</spring_stiffness>
+                            <spring_damping>10</spring_damping>
+                        </dynamics>
+                        <limit>
+                            <lower>-1.79769e+308</lower>    <!--negative infinity-->
+                            <upper>1.79769e+308</upper>     <!--positive infinity-->
+                           
+                        </limit>
+                    </axis>
+                </joint>
+                <!-- left front wheel joint -->
+                <joint name='left_front_wheel_joint' type='ball'>
+                    <parent>chassis</parent>
+                    <child>left_front_wheel</child>
+                </joint>
+                <!-- right front wheel joint -->
+                <joint name='right_front_wheel_joint' type='ball'>
+                    <parent>chassis</parent>
+                    <child>right_front_wheel</child>
+                </joint>
+                <!-- primary arm joint-->
+                <joint name="primary_arm_joint" type="revolute">
+                    <pose relative_to="primary_arm"/>
+                    <parent>chassis</parent>
+                    <child>primary_arm</child>
+                    <axis>
+                        <xyz expressed_in='__model__'>0 0 1</xyz> <!-- z axis of model -->
+                        <limit>
+                            <lower>-1.5707</lower>    <!-- -pi/2 to pi/2 -->
+                            <upper>1.5707</upper> 
+                            <effort>1e6</effort>
+                            <velocity>1</velocity>   
+                        </limit>
+                    </axis>
+                </joint>
+                <!-- secondary arm joint-->
+                <joint name="secondary_arm_joint" type="fixed">
+                    <pose relative_to="primary_arm"/>
+                    <parent>primary_arm</parent>
+                    <child>secondary_arm</child>
+                </joint>
+                <!-- tertiary arm joint-->
+                <joint name="tertiary_arm_joint" type="prismatic">  
+                    <pose relative_to="secondary_arm"/>
+                    <parent>secondary_arm</parent>
+                    <child>tertiary_arm</child>
+                    <axis>
+                        <xyz>1 0 0</xyz>
+                        <limit>
+                            <lower>-1</lower>
+                            <upper>0</upper>
+                            <effort>10</effort>
+                            <velocity>0.5</velocity>
+                        </limit>
+                    </axis>
+                </joint>
+                <!-- hand joint-->
+                <joint name="hand_joint" type="revolute">
+                    <pose relative_to="tertiary_arm"/>
+                    <parent>tertiary_arm</parent>
+                    <child>hand</child>
+                    <axis> 
+                        <xyz expressed_in="__model__">0 0 1</xyz>
+                        <limit>
+                            <lower>-1.79769e+308</lower>    <!--negative infinity-->
+                            <upper>1.79769e+308</upper>     <!--positive infinity-->
+                        </limit>
+                    </axis>
+                </joint>
+                <!-- Differential drive plugin -->
+                <plugin
+                    filename="libignition-gazebo-diff-drive-system.so"
+                    name="ignition::gazebo::systems::DiffDrive">
+                    <left_joint>left_wheel_joint</left_joint>
+                    <right_joint>right_wheel_joint</right_joint>
+                    <max_force>10</max_force>
+                    <wheel_separation>3</wheel_separation>
+                    <wheel_radius>0.5</wheel_radius>
+                    <odom_publish_frequency>1</odom_publish_frequency>
+                    <topic>debug_cmd_vel</topic> 
+                    <stop_on_zero_velocity>true</stop_on_zero_velocity>
+                </plugin>
+                <!-- Moving Forward -->
+                <plugin filename="libignition-gazebo-triggered-publisher-system.so"
+                        name="ignition::gazebo::systems::TriggeredPublisher">
+                    <input type="ignition.msgs.Int32" topic="/keyboard/keypress">
+                        <match field="data">16777235</match> <!-- up arrow key -->
+                    </input>
+                    <output type="ignition.msgs.Twist" topic="/debug_cmd_vel">
+                        linear: {x: 1}, angular: {z: 0}
+                    </output>
+                    <default>
+                        <output type="ignition.msgs.Twist" topic="/debug_cmd_vel">
+                            linear: {x: 0.0}, angular: {z: 0.0}
+                        </output>
+                    </default>
+                    <rate>1</rate>
+                </plugin>
+                <!-- Moving Backward-->
+                <plugin filename="libignition-gazebo-triggered-publisher-system.so"
+                        name="ignition::gazebo::systems::TriggeredPublisher">
+                    <input type="ignition.msgs.Int32" topic="/keyboard/keypress">
+                        <match field="data">16777237</match> <!-- down arrow key -->
+                    </input>
+                    <output type="ignition.msgs.Twist" topic="/debug_cmd_vel">
+                        linear: {x: -1}, angular: {z: 0.0}
+                    </output>
+                    <default>
+                        <output type="ignition.msgs.Twist" topic="/debug_cmd_vel">
+                            linear: {x: 0.0}, angular: {z: 0.0}
+                        </output>
+                    </default>
+                    <rate>1</rate>
+                </plugin>
+                <!-- Turning left-->
+                <plugin filename="libignition-gazebo-triggered-publisher-system.so"
+                        name="ignition::gazebo::systems::TriggeredPublisher">
+                    <input type="ignition.msgs.Int32" topic="/keyboard/keypress">
+                        <match field="data">16777234</match> <!-- left arrow key -->
+                    </input>
+                    <output type="ignition.msgs.Twist" topic="/debug_cmd_vel">
+                        linear: {x: 0.0}, angular: {z: 0.5}
+                    </output>
+                    <default>
+                        <output type="ignition.msgs.Twist" topic="/debug_cmd_vel">
+                            linear: {x: 0.0}, angular: {z: 0.0}
+                        </output>
+                    </default>
+                    <rate>1</rate>
+                </plugin>
+                <!-- Turning right-->
+                <plugin filename="libignition-gazebo-triggered-publisher-system.so"
+                        name="ignition::gazebo::systems::TriggeredPublisher">
+                    <input type="ignition.msgs.Int32" topic="/keyboard/keypress">
+                        <match field="data">16777236</match> <!-- right arrow key -->
+                    </input>
+                    <output type="ignition.msgs.Twist" topic="/debug_cmd_vel">
+                        linear: {x: 0.0}, angular: {z: -0.5}
+                    </output>
+                    <default>
+                        <output type="ignition.msgs.Twist" topic="/debug_cmd_vel">
+                            linear: {x: 0.0}, angular: {z: 0.0}
+                        </output>
+                    </default>
+                    <rate>1</rate>
+                </plugin>
+                <!-- Stopping -->
+                <plugin filename="libignition-gazebo-triggered-publisher-system.so"
+                        name="ignition::gazebo::systems::TriggeredPublisher">
+                    <input type="ignition.msgs.Int32" topic="/keyboard/keypress">
+                        <match field="data">81</match> <!-- Q -->
+                    </input>
+                    <output type="ignition.msgs.Twist" topic="/debug_cmd_vel">
+                        linear: {x: 0.0}, angular: {z: 0.0}
+                    </output>
+                    <default>
+                        <output type="ignition.msgs.Twist" topic="/debug_cmd_vel">
+                            linear: {x: 0.0}, angular: {z: 0.0}
+                        </output>
+                    </default>
+                    <rate>1</rate>
+                </plugin>
+            </model>
+            <include>
+                <uri>
+                https://fuel.gazebosim.org/1.0/jasmeetsingh/models/Mars Gale Crater Patch 2
+                </uri>
+            </include>
+        
+    </world>
+</sdf>
